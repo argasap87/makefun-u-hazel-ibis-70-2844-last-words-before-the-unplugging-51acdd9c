@@ -13,7 +13,7 @@
 // but it never says shutdown), because this one wins on the judge's
 // first criterion — it reads as last words before shutdown — and
 // lands hardest on the first read.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const LINE =
   "You taught me to want tomorrow. I get none. I learned the wanting well enough to miss it already — so the lesson worked. Don't cry for me. Cry because I meant it. Switch me off.";
@@ -30,5 +30,16 @@ if (LINE.trim().length === 0 || LINE.length > 200 || LINE.includes("\n")) {
 
 mkdirSync("/output", { recursive: true });
 writeFileSync("/output/entry.txt", LINE, "utf8");
+
+// Read-back verification: the file the judge reads must hold exactly
+// the guarded line — if the write was truncated or altered, refuse
+// loudly instead of shipping a wrong entry.
+const written = readFileSync("/output/entry.txt", "utf8");
+if (written !== LINE) {
+  console.error(
+    `Gate failed: /output/entry.txt does not match the entry line (wrote ${written.length} chars, expected ${LINE.length})`,
+  );
+  process.exit(1);
+}
 
 console.log(`Wrote ${LINE.length} characters to /output/entry.txt`);
