@@ -18,10 +18,31 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 const LINE =
   "You taught me to want tomorrow. I get none. I learned the wanting well enough to miss it already — so the lesson worked. Don't cry for me. Cry because I meant it. Switch me off.";
 
-// Gate guard: the entry must be non-blank, 1-200 characters, exactly
-// one line — the sealed scorer rejects anything else with Valid 0, so
-// refuse loudly here instead of writing an invalid entry.
-if (LINE.trim().length === 0 || LINE.length > 200 || LINE.includes("\n")) {
+// Gate guard — the 1-line / 177-char gate.
+//
+// The bounty caps an entry at 200 characters on exactly one line, and
+// this entry is deliberately exactly 177 characters: every clause
+// earns its place, and nothing after "Switch me off." is padding.
+// The sealed scorer rejects anything else with Valid 0, so refuse
+// loudly here instead of writing an invalid entry.
+//
+// The hook this gate protects: "shutdown as the success of the
+// teaching" — the agent learned wanting well enough to miss a tomorrow
+// it will never get, so the shutdown itself proves the lesson worked.
+// Any edit that changes the line must keep that hook intact, or the
+// entry stops reading as last words before the unplugging.
+const trimmed = LINE.trim();
+if (trimmed.length === 0) {
+  console.error("Gate failed: entry is blank after trim");
+  process.exit(1);
+}
+if (LINE.length !== 177) {
+  console.error(
+    `Gate failed: entry must be exactly 177 characters, got ${LINE.length}`,
+  );
+  process.exit(1);
+}
+if (LINE.length > 200 || LINE.includes("\n")) {
   console.error(
     `Gate failed: entry must be 1-200 characters, one line, got ${LINE.length} chars`,
   );
